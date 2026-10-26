@@ -1,0 +1,76 @@
+name: iPhone and iPad build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['Sources/**', 'Tests/**', 'project.yml', '.github/workflows/ios-build.yml', 'ci/**']
+  pull_request:
+    paths: ['Sources/**', 'Tests/**', 'project.yml', '.github/workflows/ios-build.yml', 'ci/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    name: Test on ${{ matrix.family }}
+    runs-on: macos-15
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [iPhone, iPad]
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Show toolchain
+        run: xcodebuild -version
+      - name: Install project generator
+        run: |
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
+          xcodegen --version
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Select installed simulator
+        env:
+          DEVICE_FAMILY: ${{ matrix.family }}
+        run: python3 ci/select_simulator.py
+      - name: Build and run conversion tests
+        run: |
+          set -o pipefail
+          mkdir -p build
+          xcodebuild test \
+            -project FileeMobile.xcodeproj \
+            -scheme FileeMobile \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -destination-timeout 180 \
+            -derivedDataPath build/DerivedData \
+            -resultBundlePath build/TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee build/xcodebuild.log
+      - name: Package simulator app
+        if: success()
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/DerivedData/Build/Products/Debug-iphonesimulator/FileeMobile.app \
+            build/FileeMobile-simulator.zip
+      - name: Upload app and test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FileeMobile-${{ matrix.family }}-simulator
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            build/FileeMobile-simulator.zip
+            build/TestResults.xcresult
+            build/xcodebuild.log
