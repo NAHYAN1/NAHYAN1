@@ -1,0 +1,59 @@
+FILEE MOBILE — FIRST IOS/IPADOS PROTOTYPE
+
+Status: source prepared on Windows. NOT compiled or device-tested.
+GitHub Actions simulator workflow prepared; no cloud run has occurred yet.
+This is a new native SwiftUI implementation inspired by Filee's workflow.
+It does not reuse or claim full compatibility with Filee's C# desktop engines.
+
+Implemented:
+- Files picker: still images (including HEIC when supported by iOS) and PDFs.
+- JPG / PNG output, maximum image edge, JPEG quality, white JPEG background.
+- One PDF per image; unlocked PDF pages exported to images.
+- Multiple input files, local processing, Save to Files through the share sheet.
+- Scoped document access, preserved originals, bounded image decoding.
+- No analytics, accounts, updater, external executables, or network requests.
+
+Not implemented:
+- Word/Excel/PowerPoint, video/audio, OCR, PDF editing/merging, Photos picker,
+  incoming Share extension, conversion cancellation, persistent result browser.
+- App icon / App Store assets / signing / publication.
+- Old imports/results currently require app-data removal; add an in-app file
+  manager and retention policy before production. Background conversion is not
+  guaranteed after iOS suspends the app. Total job output is not disk-capped yet.
+
+BUILD ON A MAC
+1. Install current Xcode and its iOS simulator; open Xcode once for setup.
+2. Install XcodeGen (https://github.com/yonaskolb/XcodeGen), e.g. brew install xcodegen.
+3. Copy this entire folder to the Mac. In this folder run: xcodegen generate
+4. Open FileeMobile.xcodeproj. Select the FileeMobile scheme and an iPhone/iPad
+   simulator, then Product > Run. Simulator builds need no distribution account.
+5. Product > Test runs ConversionTests. Test on both iPhone and iPad.
+6. For a physical device choose your own unique bundle identifier and signing
+   team under Signing & Capabilities, connect the device, and run from Xcode.
+7. TestFlight/App Store distribution requires Apple Developer Program membership.
+
+BUILD FROM WINDOWS USING GITHUB'S MAC
+1. Create a dedicated GitHub repository (private if you prefer).
+2. Upload this folder's CONTENTS to the repository root, including the hidden
+   .github folder. project.yml, Sources, Tests and ci must be at repository root.
+3. Open Actions > iPhone and iPad build > Run workflow.
+4. The workflow generates the Xcode project and runs conversion tests on an
+   iPhone simulator and an iPad simulator using GitHub-hosted macOS and Xcode.
+5. Open the run to read logs and download the simulator app / test artifacts.
+   These simulator builds CANNOT install on a real iPhone or run on Windows.
+6. No Apple secrets or signing account are needed for these simulator tests.
+   GitHub-hosted macOS usage is subject to your account's allowance/billing.
+7. Physical iPhone/TestFlight builds need a separate signing workflow and your
+   Apple Developer setup. Never commit signing keys or certificates.
+
+Workflow assumes the documented macos-15 image with Xcode 16.4 installed.
+When that runner retires, update runs-on / DEVELOPER_DIR together and retest.
+
+TEST BEFORE DISTRIBUTION
+PNG transparency to JPEG, HEIC orientation, PDF multi-page and locked PDF,
+oversized / corrupt inputs, iCloud Files download, mixed batch failure,
+iPad share-sheet popover, VoiceOver, memory pressure, low disk space,
+foreground/background transitions, and files shared to Save to Files.
+
+Architecture: SwiftUI UI -> serial conversion queue -> ImageIO / UIKit / PDFKit.
+No third-party runtime libraries or desktop engine downloads.
