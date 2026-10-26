@@ -1,7 +1,9 @@
 FILEE MOBILE — FIRST IOS/IPADOS PROTOTYPE
 
-Status: source prepared on Windows. NOT compiled or device-tested.
-GitHub Actions simulator workflow prepared; no cloud run has occurred yet.
+Status: compiled and tested on hosted iPhone and iPad simulators, 2026-10-26.
+Both conversion tests passed on both simulators. NOT tested on physical devices.
+Build: https://github.com/NAHYAN1/NAHYAN1/actions/runs/40339874840
+Tested source commit: a45819aec9798ad93d0d35564706cc5dc178d4ee
 This is a new native SwiftUI implementation inspired by Filee's workflow.
 It does not reuse or claim full compatibility with Filee's C# desktop engines.
 
@@ -57,3 +59,4 @@ foreground/background transitions, and files shared to Save to Files.
 
 Architecture: SwiftUI UI -> serial conversion queue -> ImageIO / UIKit / PDFKit.
 No third-party runtime libraries or desktop engine downloads.
+
